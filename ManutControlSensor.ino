@@ -1,12 +1,26 @@
 #include <WiFi.h> //Lib WiFi
+#include <WiFiClientSecure.h>
 #include <FirebaseESP32.h> //Lib Firebase
 #include <HTTPClient.h> //Lib HTTP
-#include "time.h"
+#include "time.h" //Lib Date
+#include <UniversalTelegramBot.h> //Lib telegram
+#include <ArduinoJson.h> //Lib JSON
 
 // Provide the token generation process info.
 #include "addons/TokenHelper.h"
 // Provide the RTDB payload printing info and other helper functions.
 #include "addons/RTDBHelper.h"
+
+// Initialize Telegram BOT
+#define BOTtoken "6201693703:AAF4-Lu_rwPRHTtQzUlKgHfFikfn6_4sE68"  // your Bot Token (Get from Botfather)
+
+// Use @myidbot to find out the chat ID of an individual or a group
+// Also note that you need to click "start" on a bot before it can
+// message you
+#define CHAT_ID "2041734048"
+
+WiFiClientSecure client;
+UniversalTelegramBot bot(BOTtoken, client);
 
 #define pinoSinal 32 // PINO ANALÓGICO UTILIZADO PELO MÓDULO
 #define pinoLed 5 //PINO DIGITAL UTILIZADO PELur Domain name with URL path or IP address with path
@@ -68,11 +82,17 @@ void setup() {
 
   WiFi.begin (SSID, PASSWORD);
   Serial.print("Connecting...");
+
+  client.setCACert(TELEGRAM_CERTIFICATE_ROOT); // Add root certificate for api.telegram.org
+
   while (WiFi.status() != WL_CONNECTED)
   {
     Serial.print(".");
     delay(300);
   }
+
+  bot.sendMessage(CHAT_ID, "Bot started up", "");
+
   Serial.println();
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP());
@@ -144,6 +164,10 @@ void loop() {
     http.POST(dataJson);
 
     Serial.print ("json posted -> " + dataJson);
+
+    if(vibration > 333){
+      bot.sendMessage(CHAT_ID, "Vibração anormal registrada! Valor: " + String(vibration,2), "");
+    }
   }
 
 
