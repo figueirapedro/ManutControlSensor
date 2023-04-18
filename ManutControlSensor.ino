@@ -1,6 +1,6 @@
 #include <WiFi.h> //Lib WiFi
-#include <FirebaseESP32.h>
-
+#include <FirebaseESP32.h> //Lib Firebase
+#include <HTTPClient.h> //Lib HTTP
 #include "time.h"
 
 // Provide the token generation process info.
@@ -9,7 +9,8 @@
 #include "addons/RTDBHelper.h"
 
 #define pinoSinal 32 // PINO ANALÓGICO UTILIZADO PELO MÓDULO
-#define pinoLed 5 //PINO DIGITAL UTILIZADO PELO LED
+#define pinoLed 5 //PINO DIGITAL UTILIZADO PELur Domain name with URL path or IP address with path
+String serverName = "http://18.231.178.182:3000/api/post";
 
 //SSID e senha da rede WiFi onde o esp32 irá se conectar 
 #define SSID "Whopper"
@@ -38,9 +39,9 @@ const char* ntpServer = "pool.ntp.org";
 String vibPath = "/vibration";
 String timePath = "/timestamp";
 
-// Timer variables (send new readings every three minutes)
+// Timer variables (send new readings every second)
 unsigned long sendDataPrevMillis = 0;
-unsigned long timerDelay = 1000;
+unsigned long timerDelay = 5000;
 
 int timestamp;
 
@@ -113,6 +114,12 @@ void setup() {
 void loop() {
 
   float vibration = analogRead(pinoSinal);
+    
+  HTTPClient http;
+  
+  http.begin(serverName);
+
+  http.addHeader("Content-Type", "application/json");
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > timerDelay || sendDataPrevMillis == 0)){
     sendDataPrevMillis = millis();
@@ -122,7 +129,7 @@ void loop() {
     Serial.print ("time: ");
     Serial.println (timestamp);
 
-    String parentPath= databasePath + "/" + String(timestamp);
+    String parentPath= databasePath + "/18042023-TEST/" + String(timestamp);
 
     Serial.println ();
 
@@ -131,7 +138,15 @@ void loop() {
     json.set(vibPath.c_str(), String(vibration,2));
     json.set(timePath, String(timestamp));
     Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
+
+    String dataJson = "{\"name\": \"esp32-teste\", \"metric\": " + String(vibration,2) + "}";
+
+    http.POST(dataJson);
+
+    Serial.print ("json posted -> " + dataJson);
   }
+
+
 
   if(vibration > 10) { //SE A LEITURA DO PINO FOR MAIOR QUE 10, FAZ
     digitalWrite(pinoLed, HIGH); //ACENDE O LED
