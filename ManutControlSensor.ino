@@ -24,11 +24,13 @@ UniversalTelegramBot bot(BOTtoken, client);
 
 #define pinoSinal 32 // PINO ANALÓGICO UTILIZADO PELO MÓDULO
 #define pinoLed 5 //PINO DIGITAL UTILIZADO PELur Domain name with URL path or IP address with path
-String serverName = "http://18.231.178.182:3000/api/post";
+String serverName = "http://15.228.3.6:3000/api/post";
 
 //SSID e senha da rede WiFi onde o esp32 irá se conectar 
-#define SSID "Whopper"
-#define PASSWORD "19651968"
+//#define SSID "AndroidAP"
+//#define PASSWORD "alice-joao"
+#define SSID "ManutControl"
+#define PASSWORD "manut123"
 #define DATABASE_URL "manutcontrol-fc8ae-default-rtdb.firebaseio.com" // URL da base de dados fornecido pelo Firebase para a conexão http
 #define API_KEY "AIzaSyC0XqyJUQg51YnhUAYaMrahkrPYue5JNsQ"
 
@@ -55,7 +57,7 @@ String timePath = "/timestamp";
 
 // Timer variables (send new readings every second)
 unsigned long sendDataPrevMillis = 0;
-unsigned long timerDelay = 5000;
+unsigned long timerDelay = 10000;
 
 int timestamp;
 
@@ -149,7 +151,7 @@ void loop() {
     Serial.print ("time: ");
     Serial.println (timestamp);
 
-    String parentPath= databasePath + "/18042023-TEST/" + String(timestamp);
+    String parentPath= databasePath + "/04052023-FTT-TESTE/" + String(timestamp);
 
     Serial.println ();
 
@@ -159,13 +161,13 @@ void loop() {
     json.set(timePath, String(timestamp));
     Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
 
-    String dataJson = "{\"name\": \"esp32-teste\", \"metric\": " + String(vibration,2) + "}";
+    String dataJson = "{\"name\": \"vib-ftt-sensor\", \"machine\": \"planta-piloto\", \"metric\": " + String(vibration,2) + "}";
 
     http.POST(dataJson);
 
     Serial.print ("json posted -> " + dataJson);
 
-    if(vibration > 333){
+    if(vibration > 500){
       bot.sendMessage(CHAT_ID, "Vibração anormal registrada! Valor: " + String(vibration,2), "");
     }
   }
