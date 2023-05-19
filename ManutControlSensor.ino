@@ -8,6 +8,7 @@
 
 // Provide the token generation process info.
 #include "addons/TokenHelper.h"
+
 // Provide the RTDB payload printing info and other helper functions.
 #include "addons/RTDBHelper.h"
 
@@ -23,12 +24,10 @@ WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
 
 #define pinoSinal 32 // PINO ANALÓGICO UTILIZADO PELO MÓDULO
-#define pinoLed 5 //PINO DIGITAL UTILIZADO PELur Domain name with URL path or IP address with path
+
 String serverName = "http://15.228.3.6:3000/api/post";
 
 //SSID e senha da rede WiFi onde o esp32 irá se conectar 
-//#define SSID "AndroidAP"
-//#define PASSWORD "alice-joao"
 #define SSID "ManutControl"
 #define PASSWORD "manut123"
 #define DATABASE_URL "manutcontrol-fc8ae-default-rtdb.firebaseio.com" // URL da base de dados fornecido pelo Firebase para a conexão http
@@ -57,23 +56,9 @@ String timePath = "/timestamp";
 
 // Timer variables (send new readings every second)
 unsigned long sendDataPrevMillis = 0;
-unsigned long timerDelay = 10000;
+unsigned long timerDelay = 1000;
 
 int timestamp;
-
-/*
-// Function that gets current epoch time
-unsigned long getTime() {
-  time_t now;
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
-    return(0);
-  }
-  time(&now);
-  return now;
-}
-*/
 
 void setup() {
   // put your setup code here, to run once:
@@ -81,7 +66,7 @@ void setup() {
   pinMode(pinoSinal, INPUT); //DEFINE O PINO COMO ENTRADA
   pinMode(pinoLed, OUTPUT); //DEFINE O PINO COMO SAÍDA
   digitalWrite(pinoLed, LOW); //LED INICIA DESLIGADO
-
+  
   WiFi.begin (SSID, PASSWORD);
   Serial.print("Connecting...");
 
@@ -110,7 +95,7 @@ void setup() {
   Firebase.reconnectWiFi(true);
   fbdo.setResponseSize(4096);
   
- // Assign the callback function for the long running token generation task */
+ // Assign the callback function for the long running token generation task
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   // Assign the maximum retry of token generation
@@ -131,6 +116,7 @@ void setup() {
   Serial.println(uid);
 
   databasePath = "/UsersData/" + uid + "/readings";
+  
 }
 
 void loop() {
@@ -151,7 +137,7 @@ void loop() {
     Serial.print ("time: ");
     Serial.println (timestamp);
 
-    String parentPath= databasePath + "/04052023-FTT-TESTE/" + String(timestamp);
+    String parentPath= databasePath + "/17052023-FTT-LATERAL/" + String(timestamp);
 
     Serial.println ();
 
@@ -167,16 +153,10 @@ void loop() {
 
     Serial.print ("json posted -> " + dataJson);
 
-    if(vibration > 500){
-      bot.sendMessage(CHAT_ID, "Vibração anormal registrada! Valor: " + String(vibration,2), "");
+    if(vibration > 3900){
+      bot.sendMessage(CHAT_ID, "Vibração anormal registrada! Valor acima do esperado -> " + String(vibration,2), "");
+    } else if (vibration < 240){
+      bot.sendMessage(CHAT_ID, "Vibração anormal registrada! Valor abaixo do esperado -> " + String(vibration,2), "");
     }
-  }
-
-
-
-  if(vibration > 10) { //SE A LEITURA DO PINO FOR MAIOR QUE 10, FAZ
-    digitalWrite(pinoLed, HIGH); //ACENDE O LED
-  } else { //SENÃO
-    digitalWrite(pinoLed, LOW); //APAGA O LED
   }
 }
